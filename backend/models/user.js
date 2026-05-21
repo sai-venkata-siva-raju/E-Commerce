@@ -69,6 +69,13 @@ const userSchema = new mongoose.Schema({
     }
 });
 
+userSchema.pre('validate', function () {
+    if (!this.name) {
+        const emailLocalPart = this.email?.split('@')?.[0];
+        this.name = emailLocalPart || 'User';
+    }
+});
+
 userSchema.index(
     { username: 1 },
     {

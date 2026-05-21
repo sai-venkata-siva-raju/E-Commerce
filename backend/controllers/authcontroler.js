@@ -62,9 +62,20 @@ const getResendCooldownMs = () =>
     Number(process.env.RESEND_OTP_COOLDOWN_MINUTES || 1) * 60 * 1000;
 
 exports.registerUser = async (req, res) => {
-    const { name, email, password } = req.body;
+    const name = req.body.name || req.body.Name;
+    const email = req.body.email;
+    const password = req.body.password;
+
+    if (!name || !email || !password) {
+        return res.status(400).json({
+            message: 'Name, email, and password are required',
+        });
+    }
+
     try {
-        let existingUser = await User.findOne({ email });
+        const trimmedName = String(name).trim();
+        const trimmedEmail = String(email).trim().toLowerCase();
+        let existingUser = await User.findOne({ email: trimmedEmail });
         if (existingUser) {
             if (existingUser.emailVerified) {
                 return res.status(400).json({ message: 'User already exists' });
@@ -77,8 +88,8 @@ exports.registerUser = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const otp = generateOtp();
         const user = new User({
-            name,
-            email,
+            name: trimmedName,
+            email: trimmedEmail,
             password: await bcrypt.hash(password, salt),
             authProvider: 'local',
             emailVerified: false,
@@ -374,6 +385,7 @@ exports.googleAuth = async (req, res) => {
         let user = await User.findOne({ email });
 
         if (user) {
+            user.name = user.name || name;
             user.providerId = user.providerId || providerId;
             user.avatar = user.avatar || avatar;
             if (!user.authProvider) {
