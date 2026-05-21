@@ -58,6 +58,9 @@ const hashOtp = async (otp) => bcrypt.hash(otp, 10);
 const getOtpExpiry = (minutesEnvName, defaultMinutes = 10) =>
     new Date(Date.now() + Number(process.env[minutesEnvName] || defaultMinutes) * 60 * 1000);
 
+const getResendCooldownMs = () =>
+    Number(process.env.RESEND_OTP_COOLDOWN_MINUTES || 1) * 60 * 1000;
+
 exports.registerUser = async (req, res) => {
     const { name, email, password } = req.body;
     try {
@@ -192,8 +195,24 @@ exports.resendVerificationOtp = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        if (user.authProvider !== 'local') {
+            return res.status(400).json({
+                message: 'This account uses social login and does not require OTP verification.',
+            });
+        }
+
         if (user.emailVerified) {
             return res.status(400).json({ message: 'Email already verified' });
+        }
+
+        if (user.emailVerificationSentAt) {
+            const nextAllowedAt = user.emailVerificationSentAt.getTime() + getResendCooldownMs();
+            if (Date.now() < nextAllowedAt) {
+                const waitSeconds = Math.ceil((nextAllowedAt - Date.now()) / 1000);
+                return res.status(429).json({
+                    message: `Please wait ${waitSeconds} seconds before requesting another OTP.`,
+                });
+            }
         }
 
         const otp = generateOtp();
@@ -210,6 +229,7 @@ exports.resendVerificationOtp = async (req, res) => {
 
         res.json({
             message: 'A new verification OTP has been sent to your email.',
+            email: user.email,
         });
     } catch (err) {
         console.error(err.message);

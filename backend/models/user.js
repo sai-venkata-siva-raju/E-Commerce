@@ -5,6 +5,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    username: {
+        type: String,
+        trim: true,
+        default: undefined
+    },
     email: {
         type: String,
         required: true,
@@ -63,6 +68,16 @@ const userSchema = new mongoose.Schema({
         default: 'user'
     }
 });
+
+userSchema.index(
+    { username: 1 },
+    {
+        unique: true,
+        partialFilterExpression: {
+            username: { $type: 'string' },
+        },
+    }
+);
 
 const User = mongoose.model('User', userSchema);
 

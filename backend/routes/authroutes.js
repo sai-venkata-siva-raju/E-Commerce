@@ -17,6 +17,7 @@ router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.post('/verify-email', verifyEmail);
 router.post('/resend-otp', resendVerificationOtp);
+router.post('/resend-verification-otp', resendVerificationOtp);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/google', googleAuth);
