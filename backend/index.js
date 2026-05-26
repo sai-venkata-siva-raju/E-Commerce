@@ -16,8 +16,17 @@ app.use(cors({
 app.use(express.json());
 const authRoutes= require('./routes/authroutes');
 const adminRoutes = require('./routes/adminroutes');
+const orderRoutes = require('./routes/orderRoutes.js');
+const productRoutes = require('./routes/productRoutes.js');
+const paymentRoutes = require('./routes/paymentRoutes.js');
+const analyticsRoutes = require('./routes/analyticsRoutes.js');
 app.use('/api/auth',authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/analytics', analyticsRoutes);
+
 
 
 app.get('/',(req,res)=>{
